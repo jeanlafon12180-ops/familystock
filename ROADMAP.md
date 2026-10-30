@@ -4,7 +4,7 @@ Dernière mise à jour : 30 octobre 2026
 
 ## État du projet
 
-- Version de travail : v0.1.0 (catalogue en cours)
+- Version de travail : v0.1.1 (catalogue intelligent en cours)
 - Branche : `main`
 - Déploiement : à vérifier après chaque mise à jour.
 - Important : le catalogue est actuellement enregistré dans le stockage local du navigateur. Les données ne sont pas synchronisées entre les appareils et ne constituent pas encore une base familiale partagée.
@@ -18,7 +18,13 @@ Dernière mise à jour : 30 octobre 2026
 - [x] Conserver le catalogue dans le navigateur utilisé.
 - [ ] Vérifier le déploiement de cette version.
 - [ ] Remplacer les exemples de démonstration par l'inventaire réel communiqué par la famille.
-- [ ] Ajouter une fiche détaillée et des filtres avancés.
+- [x] Ouvrir une fiche détaillée au clic sur le titre d'un objet.
+- [x] Créer une page de recherche intelligente dédiée.
+- [x] Rechercher des livres via Google Books et afficher les couvertures et métadonnées disponibles.
+- [x] Rechercher des jeux de société via BoardGameGeek et afficher les informations disponibles.
+- [x] Ajouter un résultat de recherche au catalogue local.
+- [ ] Améliorer les filtres avancés et enrichir les fiches de jeux avec leurs photos et descriptions détaillées.
+- [ ] Développer un véritable assistant IA conversationnel pour les recommandations.
 
 ## v0.2.0 — Emprunts et réservations
 
@@ -56,4 +62,4 @@ Dernière mise à jour : 30 octobre 2026
 
 ## Règles de suivi
 
-Une tâche n'est cochée que lorsqu'elle est implémentée et vérifiée. Une mise à jour du code ne signifie pas automatiquement que la version est déjà disponible sur le site de production.
+Une tâche n'est cochée que lorsqu'elle est implémentée et vérifiée. Les appels externes doivent encore être testés en production. Une mise à jour du code ne signifie pas automatiquement que la version est déjà disponible sur le site de production.
