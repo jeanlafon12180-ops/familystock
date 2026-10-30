@@ -4,10 +4,17 @@ Dernière mise à jour : 30 octobre 2026
 
 ## État du projet
 
-- Version de travail : v0.1.1 (catalogue intelligent en cours)
+- Version de travail : v0.1.2 (nettoyage des données de démonstration)
 - Branche : `main`
 - Déploiement : à vérifier après chaque mise à jour.
 - Important : le catalogue est actuellement enregistré dans le stockage local du navigateur. Les données ne sont pas synchronisées entre les appareils et ne constituent pas encore une base familiale partagée.
+
+## v0.1.2 — Nettoyage des données de démonstration
+
+- [x] Retirer les cinq livres/jeux fictifs et les emprunts d'exemple.
+- [x] Ne plus afficher trois membres inventés ; compteur fondé sur les demandes approuvées enregistrées localement.
+- [x] Conserver uniquement le vidéoprojecteur déclaré par le propriétaire comme élément initial.
+- [ ] Déplacer les membres et les emprunts vers un stockage partagé et fiable.
 
 ## v0.1.0 — Catalogue intelligent
 
