@@ -11,22 +11,16 @@ import {
 type Category = "Livre" | "Jeu" | "Matériel";
 type Item = { id: number; name: string; category: Category; detail: string; status: "Disponible" | "Emprunté"; borrower?: string; due?: string; color: string; icon: "book" | "game" | "projector"; condition?: "Neuf" | "Bon état" | "Usé"; photo?: string; externalId?: string };
 type Loan = { id: number; itemId: number; item: string; borrower: string; start: string; due: string; status: "À confirmer" | "Emprunté" | "Rendu" };
+// Seul le vidéoprojecteur est pré-enregistré : il a été confirmé par le propriétaire.
 const initialItems: Item[] = [
-  { id: 427, name: "J’aime lire n°427", category: "Livre", detail: "Collection J’aime lire · N° 427", status: "Emprunté", borrower: "Camille", due: "2026-11-06", color: "rose", icon: "book" },
-  { id: 428, name: "J’aime lire n°428", category: "Livre", detail: "Collection J’aime lire · N° 428", status: "Disponible", color: "amber", icon: "book" },
-  { id: 429, name: "J’aime lire n°429", category: "Livre", detail: "Collection J’aime lire · N° 429", status: "Disponible", color: "violet", icon: "book" },
-  { id: 12, name: "Les Aventuriers du Rail", category: "Jeu", detail: "Jeu de société · 2 à 5 joueurs", status: "Disponible", color: "blue", icon: "game" },
-  { id: 13, name: "Catan", category: "Jeu", detail: "Jeu de société · 3 à 4 joueurs", status: "Emprunté", borrower: "Lucas", due: "2026-11-02", color: "green", icon: "game" },
-  { id: 20, name: "Vidéoprojecteur", category: "Matériel", detail: "Équipement cinéma · Réservation", status: "Disponible", color: "slate", icon: "projector" },
+  { id: 20, name: "Vidéoprojecteur", category: "Matériel", detail: "Vidéoprojecteur familial · détails à compléter", status: "Disponible", color: "slate", icon: "projector" },
 ];
-const initialLoans: Loan[] = [
-  { id: 1, itemId: 427, item: "J’aime lire n°427", borrower: "Camille", start: "2026-10-30", due: "2026-11-06", status: "Emprunté" },
-  { id: 2, itemId: 13, item: "Catan", borrower: "Lucas", start: "2026-10-29", due: "2026-11-02", status: "Emprunté" },
-];
+const initialLoans: Loan[] = [];
 const currencyDate = (value?: string) => value ? new Date(value + "T12:00:00").toLocaleDateString("fr-FR", { day: "numeric", month: "short" }) : "—";
 
 export default function Home() {
-  const [items, setItems] = useState(initialItems);
+  const [items, setItems] = useState<Item[]>(initialItems);
+  const [memberCount, setMemberCount] = useState(0);
   const [storageReady, setStorageReady] = useState(false);
   const [newDetail, setNewDetail] = useState("");
   const [newCondition, setNewCondition] = useState<"Neuf" | "Bon état" | "Usé">("Bon état");
@@ -34,8 +28,18 @@ export default function Home() {
   useEffect(() => {
     try {
       const saved = localStorage.getItem("familystock_items");
-      if (saved) setItems(JSON.parse(saved) as Item[]);
+      if (saved) {
+        const parsed = JSON.parse(saved) as Item[];
+        // Retire les six objets fictifs livrés dans l’ancienne démo, sans toucher aux objets ajoutés par la famille.
+        const demoIds = new Set([427, 428, 429, 12, 13, 20]);
+        const cleaned = parsed.filter(item => !demoIds.has(item.id) && !["J’aime lire n°427", "J’aime lire n°428", "J’aime lire n°429", "Les Aventuriers du Rail", "Catan"].includes(item.name));
+        setItems(cleaned.length ? cleaned : initialItems);
+      }
     } catch { /* Les données locales illisibles sont ignorées. */ }
+    try {
+      const requests = JSON.parse(localStorage.getItem("familystock_requests") || "[]") as Array<{status?: string}>;
+      setMemberCount(requests.filter(request => request.status === "approved").length);
+    } catch { setMemberCount(0); }
     setStorageReady(true);
   }, []);
   useEffect(() => {
@@ -44,7 +48,7 @@ export default function Home() {
       catch { /* Le catalogue reste utilisable si le stockage du navigateur est plein. */ }
     }
   }, [items, storageReady]);
-  const [loans, setLoans] = useState(initialLoans);
+  const [loans, setLoans] = useState<Loan[]>(initialLoans);
   const [tab, setTab] = useState("overview");
   const [filter, setFilter] = useState("Tous");
   const [query, setQuery] = useState("");
@@ -53,7 +57,7 @@ export default function Home() {
   const [detailItem, setDetailItem] = useState<Item | null>(null);
   const [name, setName] = useState("");
   const [due, setDue] = useState("2026-11-13");
-  const [borrower, setBorrower] = useState("Camille");
+  const [borrower, setBorrower] = useState("");
   const [newTitle, setNewTitle] = useState("");
   const [newCategory, setNewCategory] = useState<Category>("Livre");
   const [menuOpen, setMenuOpen] = useState(false);
@@ -129,14 +133,14 @@ export default function Home() {
                 {label:"Objets au catalogue",value:items.length,sub:"Toutes catégories",icon:Package,trend:"Inventaire",tone:"slate"},
                 {label:"Disponibles",value:available,sub:"Prêts à être empruntés",icon:CheckCircle2,trend:"En stock",tone:"green"},
                 {label:"Emprunts en cours",value:activeLoans,sub:"À suivre actuellement",icon:BookOpen,trend:"En cours",tone:"blue"},
-                {label:"Membres",value:3,sub:"Dans l’espace familial",icon:Users,trend:"Famille",tone:"violet"}
+                {label:"Membres validés",value:memberCount,sub:memberCount===0?"Aucun membre validé":"Accès approuvés sur cet appareil",icon:Users,trend:"Membres",tone:"violet"}
               ].map((s,i)=><div key={s.label} className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm shadow-slate-200/40"><div className="flex items-center justify-between"><div className="text-xs font-semibold text-slate-500">{s.label}</div><div className="rounded-xl bg-slate-100 p-2.5 text-slate-700"><s.icon size={18}/></div></div><div className="mt-4 flex items-end justify-between"><div><div className="text-3xl font-bold tracking-tight">{s.value}</div><div className="mt-1 text-[11px] text-slate-400">{s.sub}</div></div><span className="rounded-lg bg-slate-50 px-2 py-1 text-[10px] font-semibold text-slate-500">{s.trend}</span></div></div>)}
             </div>
             <div className="mt-6 grid gap-5 xl:grid-cols-[1.5fr_1fr]">
               <section className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm shadow-slate-200/30 sm:p-6"><div className="mb-5 flex items-center justify-between"><div><h2 className="font-bold">Emprunts récents</h2><p className="mt-1 text-xs text-slate-400">Les objets actuellement sortis</p></div><button onClick={()=>setTab("loans")} className="text-xs font-bold text-blue-700 hover:text-blue-900">Tout voir →</button></div><div className="space-y-3">{loans.filter(l=>l.status==="Emprunté").map(l=><div key={l.id} className="flex items-center gap-3 rounded-xl border border-slate-100 p-3"><div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-700"><BookOpen size={18}/></div><div className="min-w-0 flex-1"><div className="truncate text-xs font-bold">{l.item}</div><div className="mt-1 text-[10px] text-slate-400">Emprunté par {l.borrower}</div></div><div className="text-right"><div className="text-[10px] font-bold text-slate-700">Retour prévu</div><div className="mt-1 text-[11px] text-slate-500">{currencyDate(l.due)}</div></div></div>)}{activeLoans===0&&<p className="py-8 text-center text-sm text-slate-400">Aucun emprunt en cours.</p>}</div></section>
               <section className="rounded-2xl bg-slate-950 p-6 text-white shadow-xl shadow-slate-300/50"><div className="flex items-center justify-between"><div className="text-xs font-semibold text-slate-300">Votre inventaire</div><Archive size={18} className="text-slate-400"/></div><div className="mt-7 text-4xl font-bold">{items.length}<span className="ml-2 text-sm font-medium text-slate-400">objets</span></div><div className="mt-2 text-xs text-slate-400">répartis dans votre catalogue</div><div className="mt-7 space-y-4">{(["Livre","Jeu","Matériel"] as Category[]).map(c=>{const count=items.filter(i=>i.category===c).length;return <div key={c}><div className="mb-2 flex justify-between text-[11px]"><span className="text-slate-300">{c}s</span><span className="font-bold">{count}</span></div><div className="h-1.5 overflow-hidden rounded-full bg-white/10"><div className="h-full rounded-full bg-blue-400" style={{width:`${items.length?count/items.length*100:0}%`}}/></div></div>})}</div></section>
             </div>
-            <section className="mt-6 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm"><div className="mb-4 flex items-center justify-between"><div><h2 className="font-bold">Accès rapide au catalogue</h2><p className="mt-1 text-xs text-slate-400">Retrouvez les objets disponibles</p></div><button onClick={()=>setTab("catalog")} className="text-xs font-bold text-blue-700">Explorer →</button></div><div className="grid gap-3 sm:grid-cols-3">{items.slice(0,3).map(i=><button key={i.id} onClick={()=>i.status==="Disponible"?borrow(i):setTab("loans")} className="flex items-center gap-3 rounded-xl border border-slate-100 p-3 text-left transition hover:border-slate-300 hover:bg-slate-50"><div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100"><BookOpen size={18}/></div><div className="min-w-0 flex-1"><div className="truncate text-xs font-bold">{i.name}</div><div className="mt-1 text-[10px] text-slate-400">{i.category}</div></div><span className={`h-2 w-2 rounded-full ${i.status==="Disponible"?"bg-emerald-500":"bg-amber-400"}`}/></button>)}</div></section>
+            <section className="mt-6 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm"><div className="mb-4 flex items-center justify-between"><div><h2 className="font-bold">Accès rapide au catalogue</h2><p className="mt-1 text-xs text-slate-400">Retrouvez les objets disponibles</p></div><button onClick={()=>setTab("catalog")} className="text-xs font-bold text-blue-700">Explorer →</button></div><div className="grid gap-3 sm:grid-cols-3">{items.length===0&&<p className="col-span-3 py-6 text-center text-xs text-slate-400">Aucun objet ajouté pour le moment.</p>}{items.slice(0,3).map(i=><button key={i.id} onClick={()=>i.status==="Disponible"?borrow(i):setTab("loans")} className="flex items-center gap-3 rounded-xl border border-slate-100 p-3 text-left transition hover:border-slate-300 hover:bg-slate-50"><div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100"><BookOpen size={18}/></div><div className="min-w-0 flex-1"><div className="truncate text-xs font-bold">{i.name}</div><div className="mt-1 text-[10px] text-slate-400">{i.category}</div></div><span className={`h-2 w-2 rounded-full ${i.status==="Disponible"?"bg-emerald-500":"bg-amber-400"}`}/></button>)}</div></section>
           </>}
 
           {tab==="catalog" && <section><div className="mb-6 flex flex-wrap items-end justify-between gap-3"><div><h1 className="text-2xl font-bold">Votre catalogue</h1><p className="mt-1 text-sm text-slate-500">Chaque objet possède sa propre fiche et sa disponibilité.</p></div><div className="flex flex-wrap gap-2"><a href="/ajout-intelligent" className="inline-flex items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-xs font-bold text-blue-800"><Sparkles size={15}/> Recherche intelligente</a><button onClick={()=>setModal("add")} className="flex items-center gap-2 rounded-xl bg-slate-950 px-4 py-3 text-xs font-bold text-white"><Plus size={16}/> Ajouter manuellement</button></div></div><div className="mb-5 flex flex-wrap gap-3"><div className="flex min-w-[220px] flex-1 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3"><Search size={16} className="text-slate-400"/><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Rechercher un objet…" className="w-full bg-transparent py-3 text-xs outline-none"/></div><div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3"><SlidersHorizontal size={15} className="text-slate-400"/><select value={filter} onChange={e=>setFilter(e.target.value)} className="bg-transparent py-3 text-xs outline-none"><option>Tous</option><option>Livre</option><option>Jeu</option><option>Matériel</option></select></div></div><div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{filtered.map(i=><article key={i.id} className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm"><div className={`mb-5 flex h-28 items-center justify-center overflow-hidden rounded-xl ${i.color==="rose"?"bg-rose-50":i.color==="amber"?"bg-amber-50":i.color==="violet"?"bg-violet-50":i.color==="green"?"bg-emerald-50":i.color==="blue"?"bg-blue-50":"bg-slate-100"}`}>{i.photo?<img src={i.photo} alt={i.name} className="h-full w-full object-cover"/>:i.icon==="book"?<BookOpen size={32} className="text-slate-500"/>:i.icon==="game"?<Gamepad2 size={32} className="text-slate-500"/>:<Film size={32} className="text-slate-500"/>}</div><div className="flex items-center justify-between"><span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{i.category}</span><span className={`rounded-full px-2.5 py-1 text-[10px] font-bold ${i.status==="Disponible"?"bg-emerald-50 text-emerald-700":"bg-amber-50 text-amber-700"}`}>{i.status}</span></div><h3 onClick={()=>setDetailItem(i)} role="button" tabIndex={0} onKeyDown={e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();setDetailItem(i);}}} className="mt-2 cursor-pointer font-bold hover:text-blue-700">{i.name}<span className="ml-2 text-[10px] font-semibold text-blue-600">Voir la fiche ↗</span></h3><p className="mt-1 text-xs text-slate-400">{i.detail}</p><p className="mt-2 text-[10px] font-medium text-slate-500">État : {i.condition ?? "Non renseigné"}</p>{i.status==="Emprunté"&&<p className="mt-3 text-xs text-slate-500">Chez {i.borrower} · retour {currencyDate(i.due)}</p>}<button disabled={i.status!=="Disponible"} onClick={()=>borrow(i)} className="mt-5 w-full rounded-xl border border-slate-200 py-2.5 text-xs font-bold text-slate-700 transition hover:bg-slate-950 hover:text-white disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-300">{i.status==="Disponible"?"Emprunter cet objet":"Indisponible"}</button></article>)}</div>{filtered.length===0&&<div className="rounded-2xl border border-dashed border-slate-300 py-16 text-center text-sm text-slate-400">Aucun objet ne correspond à cette recherche.</div>}</section>}
