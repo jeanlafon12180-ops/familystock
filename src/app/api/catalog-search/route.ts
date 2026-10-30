@@ -16,10 +16,14 @@ export async function GET(request: Request) {
       const response = await fetch(`https://boardgamegeek.com/xmlapi2/search?type=boardgame,boardgameexpansion&query=${encodeURIComponent(q)}`, { headers: { "User-Agent": "FamilyStock/1.0" }, next: { revalidate: 3600 } });
       if (!response.ok) throw new Error("Recherche de jeux momentanément indisponible.");
       const xml = await response.text();
-      const entries = [...xml.matchAll(/<item\s+id="(\d+)"\s+type="([^"]+)"[^>]*>([\s\S]*?)<\/item>/g)].slice(0, 12);
+      const entries = [...xml.matchAll(/<item\b([^>]*)>([\s\S]*?)<\/item>/g)].slice(0, 12);
       const results: Result[] = entries.map((entry) => {
-        const body = entry[3];
-        const name = body.match(/<name\s+type="primary"\s+value="([^"]+)"/);
+        const id = entry[1].match(/\bid="(\d+)"/)?.[1] || "";
+        const body = entry[2];
+        const name = body.match(/<name\b(?=[^>]*type="primary")[^>]*value="([^"]+)"/);
+        const year = body.match(/<yearpublished\s+value="(\d+)"/);
+        return { id: "bgg-" + id, title: decodeXml(name?.[1] || "Jeu sans titre"), description: year?.[1] ? "Jeu de société publié en " + year[1] : "Jeu de société", image: "", year: year?.[1], category: "Jeu" };
+      }).filter(result => result.id !== "bgg-");
         const year = body.match(/<yearpublished\s+value="(\d+)"/);
         return { id: "bgg-" + entry[1], title: decodeXml(name?.[1] || "Jeu sans titre"), description: year?.[1] ? "Jeu de société publié en " + year[1] : "Jeu de société", image: "", year: year?.[1], category: "Jeu" };
       });
