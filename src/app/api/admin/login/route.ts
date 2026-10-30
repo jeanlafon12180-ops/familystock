@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 // Code provisoire du prototype. Remplacez cette valeur dans ce fichier.
-const ADMIN_PASSWORD = "A_REMPLACER_PAR_VOTRE_CODE";
+const ADMIN_PASSWORD = "Jean1805@";
 const SESSION_SECRET = "familystock-prototype-session-key-2026-public";
 
 export async function POST(request: NextRequest) {
