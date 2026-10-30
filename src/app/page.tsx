@@ -31,7 +31,7 @@ export default function Home() {
       if (saved) {
         const parsed = JSON.parse(saved) as Item[];
         // Retire les six objets fictifs livrés dans l’ancienne démo, sans toucher aux objets ajoutés par la famille.
-        const demoIds = new Set([427, 428, 429, 12, 13, 20]);
+        const demoIds = new Set([427, 428, 429, 12, 13]);
         const cleaned = parsed.filter(item => !demoIds.has(item.id) && !["J’aime lire n°427", "J’aime lire n°428", "J’aime lire n°429", "Les Aventuriers du Rail", "Catan"].includes(item.name));
         setItems(cleaned.length ? cleaned : initialItems);
       }
