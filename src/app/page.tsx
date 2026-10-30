@@ -20,11 +20,23 @@ const currencyDate = (value?: string) => value ? new Date(value + "T12:00:00").t
 
 export default function Home() {
   const [items, setItems] = useState<Item[]>(initialItems);
+  const [accessReady, setAccessReady] = useState(false);
+  const [activeMember, setActiveMember] = useState<{ firstName: string; lastName: string } | null>(null);
   const [memberCount, setMemberCount] = useState(0);
   const [storageReady, setStorageReady] = useState(false);
   const [newDetail, setNewDetail] = useState("");
   const [newCondition, setNewCondition] = useState<"Neuf" | "Bon état" | "Usé">("Bon état");
   const [newPhoto, setNewPhoto] = useState("");
+  useEffect(() => {
+    try {
+      const rawSession = sessionStorage.getItem("familystock_session");
+      if (!rawSession) { window.location.replace("/connexion"); return; }
+      const session = JSON.parse(rawSession) as { firstName?: string; lastName?: string };
+      if (!session.firstName || !session.lastName) { window.location.replace("/connexion"); return; }
+      setActiveMember({ firstName: session.firstName, lastName: session.lastName });
+    } catch { window.location.replace("/connexion"); return; }
+    setAccessReady(true);
+  }, []);
   useEffect(() => {
     try {
       const saved = localStorage.getItem("familystock_items");
@@ -93,6 +105,8 @@ export default function Home() {
   ];
   const heading = nav.find(n => n.id === tab)?.label ?? "Administration";
 
+  if (!accessReady) return <main className="flex min-h-screen items-center justify-center bg-slate-50 text-sm text-slate-500">Vérification de l’accès…</main>;
+
   return (
     <div className="min-h-screen lg:flex">
       <aside className={`fixed inset-y-0 left-0 z-40 flex w-[264px] flex-col border-r border-slate-200 bg-white px-5 py-6 transition-transform lg:static lg:translate-x-0 ${menuOpen ? "translate-x-0" : "-translate-x-full"}`}>
@@ -122,7 +136,7 @@ export default function Home() {
       <main className="min-w-0 flex-1">
         <header className="sticky top-0 z-20 flex h-[76px] items-center justify-between border-b border-slate-200/80 bg-white/85 px-5 backdrop-blur-xl sm:px-8">
           <div className="flex items-center gap-3"><button onClick={()=>setMenuOpen(true)} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 lg:hidden"><Menu size={19}/></button><div><div className="text-[10px] font-semibold uppercase tracking-[.16em] text-slate-400">FamilyStock / {heading}</div><div className="text-lg font-bold tracking-tight text-slate-900">{tab==="overview"?"Bonjour, bienvenue chez vous.":heading}</div></div></div>
-          <div className="flex items-center gap-2 sm:gap-4"><button className="relative rounded-xl border border-slate-200 p-2.5 text-slate-500 hover:bg-slate-50"><Bell size={17}/><span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-blue-500"/></button><div className="hidden h-8 w-px bg-slate-200 sm:block"/><div className="hidden items-center gap-2 sm:flex"><div className="text-right"><div className="text-xs font-bold">Jean</div><div className="text-[10px] text-slate-400">Administrateur</div></div><div className="flex h-9 w-9 items-center justify-center rounded-full bg-indigo-100 text-xs font-bold text-indigo-700">JL</div></div></div>
+          <div className="flex items-center gap-2 sm:gap-4"><button className="relative rounded-xl border border-slate-200 p-2.5 text-slate-500 hover:bg-slate-50"><Bell size={17}/><span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-blue-500"/></button><div className="hidden h-8 w-px bg-slate-200 sm:block"/><div className="hidden items-center gap-2 sm:flex"><div className="text-right"><div className="text-xs font-bold">{activeMember?.firstName} {activeMember?.lastName}</div><div className="text-[10px] text-slate-400">Membre familial · prototype local</div></div><div className="flex h-9 w-9 items-center justify-center rounded-full bg-indigo-100 text-xs font-bold text-indigo-700">{activeMember?.firstName?.[0]}{activeMember?.lastName?.[0]}</div><button onClick={()=>{sessionStorage.removeItem("familystock_session");window.location.replace("/connexion");}} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100" title="Se déconnecter"><LogOut size={16}/></button></div></div>
         </header>
 
         <div className="mx-auto max-w-[1440px] px-5 py-8 sm:px-8">
