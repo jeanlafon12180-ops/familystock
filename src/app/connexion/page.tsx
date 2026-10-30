@@ -66,7 +66,7 @@ export default function LoginPage() {
             <p className="text-xs text-slate-500">Pas encore de code ?</p>
             <Link href="/inscription" className="mt-2 inline-flex text-xs font-semibold text-blue-700 underline">Demander un accès familial</Link>
           </div>
-          <Link href="/admin/membres" className="mt-5 flex items-center justify-center gap-2 text-xs text-slate-400 hover:text-slate-700"><ShieldCheck size={14}/> Gestion des demandes · mode prototype</Link>
+          <Link href="/admin/connexion" className="mt-5 flex items-center justify-center gap-2 text-xs text-slate-400 hover:text-slate-700"><ShieldCheck size={14}/> Accès administrateur</Link>
         </section>
         <p className="mt-5 text-center text-[11px] leading-5 text-amber-700">Prototype local : les codes et comptes sont stockés dans ce navigateur. Ils ne sont pas synchronisés et cette connexion ne constitue pas une sécurité suffisante pour des données privées.</p>
       </div>
